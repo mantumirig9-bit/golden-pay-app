@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,10 +28,24 @@ jobs:
           rm -f package-lock.json
           rm -rf android
 
-      - name: Install Capacitor
+      - name: Create Package
         run: |
-          npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          cat > package.json <<'EOF'
+          {
+            "name": "golden-pay",
+            "version": "1.0.0",
+            "private": true,
+            "scripts": {},
+            "dependencies": {
+              "@capacitor/core": "6.2.0",
+              "@capacitor/cli": "6.2.0",
+              "@capacitor/android": "6.2.0"
+            }
+          }
+          EOF
+
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund
 
       - name: Create Web App
         run: |
@@ -57,6 +71,7 @@ jobs:
                 justify-content: center;
                 flex-direction: column;
               }
+
               .logo {
                 width: 190px;
                 height: 190px;
@@ -64,11 +79,13 @@ jobs:
                 object-fit: cover;
                 box-shadow: 0 0 40px rgba(212,175,55,0.4);
               }
+
               h1 {
                 margin-top: 24px;
                 color: #d4af37;
                 font-size: 34px;
               }
+
               p {
                 color: #aaa;
                 font-size: 16px;
@@ -97,11 +114,11 @@ jobs:
           }
           EOF
 
-      - name: Add Android Platform
-        run: ./node_modules/.bin/cap add android
+      - name: Add Android
+        run: npx cap add android
 
       - name: Sync Android
-        run: ./node_modules/.bin/cap sync android
+        run: npx cap sync android
 
       - name: Build APK
         run: |
