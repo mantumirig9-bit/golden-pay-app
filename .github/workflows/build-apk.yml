@@ -8,25 +8,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout project
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Setup Java
+      - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Install dependencies
+      - name: Clean project
         run: |
-          npm install
-          npm install vite @vitejs/plugin-react react react-dom
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          rm -rf node_modules
+          rm -f package-lock.json
+
+      - name: Create package.json
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "golden-pay",
+            "version": "1.0.0",
+            "private": true,
+            "type": "module",
+            "scripts": {
+              "build": "vite build"
+            },
+            "dependencies": {
+              "@vitejs/plugin-react": "latest",
+              "vite": "latest",
+              "react": "latest",
+              "react-dom": "latest",
+              "@capacitor/core": "latest",
+              "@capacitor/cli": "latest",
+              "@capacitor/android": "latest",
+              "lucide-react": "latest",
+              "qrcode": "latest"
+            },
+            "devDependencies": {}
+          }
+          EOF
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
 
       - name: Create Vite config
         run: |
@@ -36,10 +64,13 @@ jobs:
 
           export default defineConfig({
             plugins: [react()],
+            build: {
+              outDir: 'dist'
+            }
           })
           EOF
 
-      - name: Fix Capacitor config
+      - name: Create Capacitor config
         run: |
           cat > capacitor.config.json <<'EOF'
           {
@@ -49,16 +80,32 @@ jobs:
           }
           EOF
 
-      - name: Build Web App
+      - name: Create basic index if missing
+        run: |
+          if [ ! -f index.html ]; then
+            cat > index.html <<'EOF'
+          <html>
+            <head>
+              <title>Golden Pay</title>
+            </head>
+            <body>
+              <div id="root"></div>
+              <script type="module" src="/main.jsx"></script>
+            </body>
+          </html>
+          EOF
+          fi
+
+      - name: Build web app
         run: npm run build
 
-      - name: Add Android Platform
-        run: npx cap add android || true
+      - name: Add Android platform
+        run: npx cap add android
 
       - name: Sync Android
         run: npx cap sync android
 
-      - name: Build APK
+      - name: Build debug APK
         run: |
           cd android
           chmod +x gradlew
