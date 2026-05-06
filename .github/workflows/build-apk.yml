@@ -8,104 +8,86 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout project
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Setup Java JDK
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Clean project
+      - name: Install Capacitor
         run: |
-          rm -rf node_modules
-          rm -f package-lock.json
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Create package.json
+      - name: Create Web App
         run: |
-          cat > package.json <<'EOF'
-          {
-            "name": "golden-pay",
-            "version": "1.0.0",
-            "private": true,
-            "type": "module",
-            "scripts": {
-              "build": "vite build"
-            },
-            "dependencies": {
-              "@vitejs/plugin-react": "latest",
-              "vite": "latest",
-              "react": "latest",
-              "react-dom": "latest",
-              "@capacitor/core": "latest",
-              "@capacitor/cli": "latest",
-              "@capacitor/android": "latest",
-              "lucide-react": "latest",
-              "qrcode": "latest"
-            },
-            "devDependencies": {}
-          }
+          mkdir www
+
+          cat > www/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Golden Pay</title>
+
+            <style>
+              body{
+                margin:0;
+                background:#000;
+                color:white;
+                font-family:Arial;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                height:100vh;
+                flex-direction:column;
+              }
+
+              img{
+                width:180px;
+                border-radius:25px;
+              }
+
+              h1{
+                color:gold;
+                margin-top:25px;
+              }
+            </style>
+          </head>
+
+          <body>
+            <img src="https://i.imgur.com/t0QwY9h.jpeg">
+            <h1>Golden Pay</h1>
+          </body>
+          </html>
           EOF
 
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Create Vite config
-        run: |
-          cat > vite.config.js <<'EOF'
-          import { defineConfig } from 'vite'
-          import react from '@vitejs/plugin-react'
-
-          export default defineConfig({
-            plugins: [react()],
-            build: {
-              outDir: 'dist'
-            }
-          })
-          EOF
-
-      - name: Create Capacitor config
+      - name: Create Capacitor Config
         run: |
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "com.goldenpay.app",
             "appName": "Golden Pay",
-            "webDir": "dist"
+            "webDir": "www"
           }
           EOF
 
-      - name: Create basic index if missing
-        run: |
-          if [ ! -f index.html ]; then
-            cat > index.html <<'EOF'
-          <html>
-            <head>
-              <title>Golden Pay</title>
-            </head>
-            <body>
-              <div id="root"></div>
-              <script type="module" src="/main.jsx"></script>
-            </body>
-          </html>
-          EOF
-          fi
-
-      - name: Build web app
-        run: npm run build
-
-      - name: Add Android platform
+      - name: Add Android
         run: npx cap add android
 
       - name: Sync Android
         run: npx cap sync android
 
-      - name: Build debug APK
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
