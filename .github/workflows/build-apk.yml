@@ -22,55 +22,75 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Clean Project
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+          rm -rf android
+
       - name: Install Capacitor
-  run: |
-    npm init -y
-    npm install @capacitor/core @capacitor/cli @capacitor/android
-    npx cap init "Golden Pay" "com.goldenpay.app" --web-dir=www
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Create Web App
         run: |
-          mkdir www
+          rm -rf www
+          mkdir -p www
 
           cat > www/index.html <<'EOF'
           <!DOCTYPE html>
           <html>
           <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>Golden Pay</title>
-
             <style>
-              body{
-                margin:0;
-                background:#000;
-                color:white;
-                font-family:Arial;
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                height:100vh;
-                flex-direction:column;
+              body {
+                margin: 0;
+                background: #000;
+                color: white;
+                font-family: Arial, sans-serif;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
               }
 
-              img{
-                width:180px;
-                border-radius:25px;
+              .logo {
+                width: 190px;
+                height: 190px;
+                border-radius: 30px;
+                object-fit: cover;
+                box-shadow: 0 0 40px rgba(212, 175, 55, 0.4);
               }
 
-              h1{
-                color:gold;
-                margin-top:25px;
+              h1 {
+                margin-top: 24px;
+                color: #d4af37;
+                font-size: 34px;
+              }
+
+              p {
+                color: #aaa;
+                font-size: 16px;
               }
             </style>
           </head>
-
           <body>
-            <img src="https://i.imgur.com/t0QwY9h.jpeg">
+            <img class="logo" src="./splash-logo.jpg" />
             <h1>Golden Pay</h1>
+            <p>Premium Partner</p>
           </body>
           </html>
           EOF
+
+          if [ -f splash-logo.jpg ]; then
+            cp splash-logo.jpg www/splash-logo.jpg
+          else
+            echo "No splash-logo.jpg found"
+          fi
 
       - name: Create Capacitor Config
         run: |
@@ -82,11 +102,11 @@ jobs:
           }
           EOF
 
-      - name: Add Android
-        run: npx cap add android
+      - name: Add Android Platform
+        run: ./node_modules/.bin/cap add android
 
       - name: Sync Android
-        run: npx cap sync android
+        run: ./node_modules/.bin/cap sync android
 
       - name: Build APK
         run: |
